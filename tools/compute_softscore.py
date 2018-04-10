@@ -86,8 +86,10 @@ def get_score(occurences):
         return 0.6
     elif occurences == 3:
         return 0.9
-    else:
+    elif occurences > 3:
         return 1
+    else:
+        return occurences
 
 
 def process_punctuation(inText):
@@ -169,9 +171,9 @@ def create_ans2label(occurence, name, cache_root='data/cache'):
     utils.create_dir(cache_root)
 
     cache_file = os.path.join(cache_root, name+'_ans2label.pkl')
-    cPickle.dump(ans2label, open(cache_file, 'wb'))
+    pickle.dump(ans2label, open(cache_file, 'wb'))
     cache_file = os.path.join(cache_root, name+'_label2ans.pkl')
-    cPickle.dump(label2ans, open(cache_file, 'wb'))
+    pickle.dump(label2ans, open(cache_file, 'wb'))
     return ans2label
 
 
@@ -190,14 +192,27 @@ def compute_target(answers_dset, ans2label, name, cache_root='data/cache'):
         answers = ans_entry['answers']
         answer_count = {}
         new_answer_count={}
+        no_yes=0
+        no_no=0
         for answer in answers:
             answer_ = answer['answer']
             if answer_.lower()=="yes":
-                temp_ans="no"
+                no_yes+=1
             elif answer_.lower()=="no":
-                temp_ans="yes"
+                no_no+=1
             answer_count[answer_] = answer_count.get(answer_, 0) + 1
-            new_answer_count[temp_ans]= new_answer_count.get(temp_ans, 0) + 1
+        ''' Change values here'''
+        #When ANSWER IS DEFINITELY YES FOR THIS IMAGE, PROBABILITY OF NO IS HIGHER FOR RANDOM
+        if (no_yes >  no_no):
+            new_answer_count["yes"]=0.2 
+            new_answer_count["no"]=0.8
+        elif no_no > no_yes: #When ANSWER IS DEFINITELY No FOR THIS IMAGE, PROBABILITY OF NO IS HIGHER FOR RANDOM but some probability for yes
+            new_answer_count["yes"]=0.2
+            new_answer_count["no"]=0.8
+        elif no_no == no_yes and no_yes !=0 and no_no !=0:
+            answer_count["yes"]=0.5
+            answer_count["no"]=0.5
+
 
         labels = []
         scores = []
@@ -207,14 +222,7 @@ def compute_target(answers_dset, ans2label, name, cache_root='data/cache'):
             labels.append(ans2label[answer])
             score = get_score(answer_count[answer])
             scores.append(score)
-        new_labels=[]
-        new_scores=[]
-        for answer in new_answer_count:
-            if answer not in ans2label:
-                continue
-            new_labels.append(ans2label[answer])
-            new_score = get_score(new_answer_count[answer])
-            new_scores.append(new_score)
+
 
         target.append({
             'question_id': ans_entry['question_id'],
@@ -222,18 +230,31 @@ def compute_target(answers_dset, ans2label, name, cache_root='data/cache'):
             'labels': labels,
             'scores': scores
         })
-        target.append({
-            'question_id': ans_entry['question_id'],
-            'image_id': random.choice(imgids),
-            'labels': new_labels,
-            'scores': new_scores
-        })
+        if bool(new_answer_count):
+            new_labels=[]
+            new_scores=[]
+            for answer in new_answer_count:
+                if answer not in ans2label:
+                    continue
+                new_labels.append(ans2label[answer])
+                new_score = get_score(new_answer_count[answer])
+                new_scores.append(new_score)
+                target.append({
+                    'question_id': ans_entry['question_id'],
+                    'image_id': random.choice(imgids),
+                    'labels': new_labels,
+                    'scores': new_scores
+                })
+
+       
+        
+        
 
 
 
     utils.create_dir(cache_root)
     cache_file = os.path.join(cache_root, name+'_target.pkl')
-    cPickle.dump(target, open(cache_file, 'wb'))
+    pickle.dump(target, open(cache_file, 'wb'))
     return target
 
 
