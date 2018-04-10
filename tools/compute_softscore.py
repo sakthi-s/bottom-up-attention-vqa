@@ -4,12 +4,12 @@ import sys
 import json
 import numpy as np
 import re
-import cPickle
+import pickle
+import random
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dataset import Dictionary
 import utils
-
 
 contractions = {
     "aint": "ain't", "arent": "aren't", "cant": "can't", "couldve":
@@ -182,13 +182,22 @@ def compute_target(answers_dset, ans2label, name, cache_root='data/cache'):
 
     Write result into a cache file
     """
+    ids_file = 'data/'+name+'_ids.pkl'
+    imgids = pickle.load(open(ids_file,"rb"))
+    
     target = []
     for ans_entry in answers_dset:
         answers = ans_entry['answers']
         answer_count = {}
+        new_answer_count={}
         for answer in answers:
             answer_ = answer['answer']
+            if answer_.lower()=="yes":
+                temp_ans="no"
+            elif answer_.lower()=="no":
+                temp_ans="yes"
             answer_count[answer_] = answer_count.get(answer_, 0) + 1
+            new_answer_count[temp_ans]= new_answer_count.get(temp_ans, 0) + 1
 
         labels = []
         scores = []
@@ -198,6 +207,14 @@ def compute_target(answers_dset, ans2label, name, cache_root='data/cache'):
             labels.append(ans2label[answer])
             score = get_score(answer_count[answer])
             scores.append(score)
+        new_labels=[]
+        new_scores=[]
+        for answer in new_answer_count:
+            if answer not in ans2label:
+                continue
+            new_labels.append(ans2label[answer])
+            new_score = get_score(answer_count[answer])
+            new_scores.append(new_score)
 
         target.append({
             'question_id': ans_entry['question_id'],
@@ -205,6 +222,14 @@ def compute_target(answers_dset, ans2label, name, cache_root='data/cache'):
             'labels': labels,
             'scores': scores
         })
+        target.append({
+            'question_id': ans_entry['question_id'],
+            'image_id': random.choice(imgids),
+            'labels': new_labels,
+            'scores': new_scores
+        })
+
+
 
     utils.create_dir(cache_root)
     cache_file = os.path.join(cache_root, name+'_target.pkl')
