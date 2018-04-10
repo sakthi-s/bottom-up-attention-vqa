@@ -213,7 +213,7 @@ def compute_target(answers_dset, ans2label, name, cache_root='data/cache'):
             if answer not in ans2label:
                 continue
             new_labels.append(ans2label[answer])
-            new_score = get_score(answer_count[answer])
+            new_score = get_score(new_answer_count[answer])
             new_scores.append(new_score)
 
         target.append({
