@@ -79,13 +79,13 @@ def _load_dataset(dataroot, name, img_id2val):
     dataroot: root path of dataset
     name: 'train', 'val'
     """
-    question_path = os.path.join(
-        dataroot, 'v2_OpenEnded_mscoco_%s2014_questions.json' % name)
-    questions = sorted(json.load(open(question_path))['questions'],
-                       key=lambda x: x['question_id'])
-    answer_path = os.path.join(dataroot, 'cache', '%s_target.pkl' % name)
+    question_path = os.path.join(dataroot, 'cache', '%s_que_target.pkl' % name)
+    questions = cPickle.load(open(question_path, 'rb'))
+    # questions = sorted(questions, key=lambda x: x['question_id'])
+
+    answer_path = os.path.join(dataroot, 'cache', '%s_ans_target.pkl' % name)
     answers = cPickle.load(open(answer_path, 'rb'))
-    answers = sorted(answers, key=lambda x: x['question_id'])
+    # answers = sorted(answers, key=lambda x: x['question_id'])
 
     utils.assert_eq(len(questions), len(answers))
     entries = []
