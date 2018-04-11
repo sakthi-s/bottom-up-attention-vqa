@@ -17,7 +17,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import base64
 import csv
 import h5py
-import cPickle
+import pickle
 import numpy as np
 import utils
 
@@ -42,13 +42,13 @@ if __name__ == '__main__':
     h_val = h5py.File(val_data_file, "w")
 
     if os.path.exists(train_ids_file) and os.path.exists(val_ids_file):
-        train_imgids = cPickle.load(open(train_ids_file))
-        val_imgids = cPickle.load(open(val_ids_file))
+        train_imgids = pickle.load(open(train_ids_file,"rb"))
+        val_imgids = pickle.load(open(val_ids_file,"rb"))
     else:
         train_imgids = utils.load_imageid('data/train2014')
         val_imgids = utils.load_imageid('data/val2014')
-        cPickle.dump(train_imgids, open(train_ids_file, 'wb'))
-        cPickle.dump(val_imgids, open(val_ids_file, 'wb'))
+        pickle.dump(train_imgids, open(train_ids_file, 'wb'))
+        pickle.dump(val_imgids, open(val_ids_file, 'wb'))
 
     train_indices = {}
     val_indices = {}
@@ -132,8 +132,8 @@ if __name__ == '__main__':
     if len(val_imgids) != 0:
         print('Warning: val_image_ids is not empty')
 
-    cPickle.dump(train_indices, open(train_indices_file, 'wb'))
-    cPickle.dump(val_indices, open(val_indices_file, 'wb'))
+    pickle.dump(train_indices, open(train_indices_file, 'wb'))
+    pickle.dump(val_indices, open(val_indices_file, 'wb'))
     h_train.close()
     h_val.close()
     print("done!")

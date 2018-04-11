@@ -1,7 +1,7 @@
 from __future__ import print_function
 import os
 import json
-import cPickle
+import pickle
 import numpy as np
 import utils
 import h5py
@@ -40,13 +40,13 @@ class Dictionary(object):
         return tokens
 
     def dump_to_file(self, path):
-        cPickle.dump([self.word2idx, self.idx2word], open(path, 'wb'))
+        pickle.dump([self.word2idx, self.idx2word], open(path, 'wb'))
         print('dictionary dumped to %s' % path)
 
     @classmethod
     def load_from_file(cls, path):
         print('loading dictionary from %s' % path)
-        word2idx, idx2word = cPickle.load(open(path, 'rb'))
+        word2idx, idx2word = pickle.load(open(path, 'rb'))
         d = cls(word2idx, idx2word)
         return d
 
