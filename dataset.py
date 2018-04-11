@@ -80,11 +80,11 @@ def _load_dataset(dataroot, name, img_id2val):
     name: 'train', 'val'
     """
     question_path = os.path.join(dataroot, 'cache', '%s_que_target.pkl' % name)
-    questions = cPickle.load(open(question_path, 'rb'))
+    questions = pickle.load(open(question_path, 'rb'))
     # questions = sorted(questions, key=lambda x: x['question_id'])
 
     answer_path = os.path.join(dataroot, 'cache', '%s_ans_target.pkl' % name)
-    answers = cPickle.load(open(answer_path, 'rb'))
+    answers = pickle.load(open(answer_path, 'rb'))
     # answers = sorted(answers, key=lambda x: x['question_id'])
 
     utils.assert_eq(len(questions), len(answers))
@@ -105,13 +105,13 @@ class VQAFeatureDataset(Dataset):
 
         ans2label_path = os.path.join(dataroot, 'cache', 'trainval_ans2label.pkl')
         label2ans_path = os.path.join(dataroot, 'cache', 'trainval_label2ans.pkl')
-        self.ans2label = cPickle.load(open(ans2label_path, 'rb'))
-        self.label2ans = cPickle.load(open(label2ans_path, 'rb'))
+        self.ans2label = pickle.load(open(ans2label_path, 'rb'))
+        self.label2ans = pickle.load(open(label2ans_path, 'rb'))
         self.num_ans_candidates = len(self.ans2label)
 
         self.dictionary = dictionary
 
-        self.img_id2idx = cPickle.load(
+        self.img_id2idx = pickle.load(
             open(os.path.join(dataroot, '%s36_imgid2idx.pkl' % name)))
         print('loading features from h5 file')
         h5_path = os.path.join(dataroot, '%s36.hdf5' % name)
