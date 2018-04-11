@@ -177,7 +177,7 @@ def create_ans2label(occurence, name, cache_root='data/cache'):
     return ans2label
 
 
-def compute_target(answers_dset, ans2label, name, cache_root='data/cache'):
+def compute_target(answers_dset, ans2label, questions_dset, name, cache_root='data/cache'):
     """Augment answers_dset with soft score as label
 
     ***answers_dset should be preprocessed***
@@ -187,8 +187,9 @@ def compute_target(answers_dset, ans2label, name, cache_root='data/cache'):
     ids_file = 'data/'+name+'_ids.pkl'
     imgids = pickle.load(open(ids_file,"rb"))
     
-    target = []
-    for ans_entry in answers_dset:
+    ans_target = []
+    que_target = []
+    for ans_entry, que_entry in zip(answers_dset, questions_dset):
         answers = ans_entry['answers']
         answer_count = {}
         new_answer_count={}
@@ -224,12 +225,18 @@ def compute_target(answers_dset, ans2label, name, cache_root='data/cache'):
             scores.append(score)
 
 
-        target.append({
+        ans_target.append({
             'question_id': ans_entry['question_id'],
             'image_id': ans_entry['image_id'],
             'labels': labels,
             'scores': scores
         })
+        que_target.append({
+            'question_id': que_entry['question_id'],
+            'image_id': que_entry['image_id'],
+            'question': que_entry['question']
+            })
+
         if bool(new_answer_count):
             new_labels=[]
             new_scores=[]
@@ -239,23 +246,25 @@ def compute_target(answers_dset, ans2label, name, cache_root='data/cache'):
                 new_labels.append(ans2label[answer])
                 new_score = get_score(new_answer_count[answer])
                 new_scores.append(new_score)
-                target.append({
+                ans_target.append({
                     'question_id': ans_entry['question_id'],
-                    'image_id': random.choice(imgids),
+                    'image_id': random.sample(imgids,1)[0],
                     'labels': new_labels,
                     'scores': new_scores
                 })
-
-       
-        
-        
-
+                que_target.append({
+                    'question_id': que_entry['question_id'],
+                    'image_id': que_entry['image_id'],
+                    'question': que_entry['question']
+                    })
 
 
     utils.create_dir(cache_root)
-    cache_file = os.path.join(cache_root, name+'_target.pkl')
-    pickle.dump(target, open(cache_file, 'wb'))
-    return target
+    ans_cache_file = os.path.join(cache_root, name+'_ans_target.pkl')
+    pickle.dump(ans_target, open(ans_cache_file, 'wb'))
+    que_cache_file = os.path.join(cache_root, name+'_que_target.pkl')
+    pickle.dump(que_target, open(que_cache_file, 'wb'))
+    return ans_target, que_target
 
 
 def get_answer(qid, answers):
@@ -286,5 +295,5 @@ if __name__ == '__main__':
     answers = train_answers + val_answers
     occurence = filter_answers(answers, 9)
     ans2label = create_ans2label(occurence, 'trainval')
-    compute_target(train_answers, ans2label, 'train')
-    compute_target(val_answers, ans2label, 'val')
+    compute_target(train_answers, ans2label, train_questions, 'train')
+    compute_target(val_answers, ans2label, val_questions, 'val')
