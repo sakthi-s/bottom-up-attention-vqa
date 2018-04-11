@@ -241,7 +241,7 @@ def compute_target(answers_dset, ans2label, name, cache_root='data/cache'):
                 new_scores.append(new_score)
                 target.append({
                     'question_id': ans_entry['question_id'],
-                    'image_id': random.choice(imgids),
+                    'image_id': random.sample(imgids,1)[0],
                     'labels': new_labels,
                     'scores': new_scores
                 })
