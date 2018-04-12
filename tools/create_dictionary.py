@@ -21,6 +21,7 @@ def create_dictionary(dataroot):
         qs = json.load(open(question_path))['questions']
         for q in qs:
             dictionary.tokenize(q['question'], True)
+	    dictionary.create_pos_tag(q['question'], q['question_id'])
     return dictionary
 
 
@@ -47,6 +48,7 @@ def create_glove_embedding_init(idx2word, glove_file):
 if __name__ == '__main__':
     d = create_dictionary('data')
     d.dump_to_file('data/dictionary.pkl')
+    d.dump_to_file('data/postag.pkl')
 
     d = Dictionary.load_from_file('data/dictionary.pkl')
     emb_dim = 300

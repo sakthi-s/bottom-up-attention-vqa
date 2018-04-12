@@ -7,7 +7,7 @@ import utils
 import h5py
 import torch
 from torch.utils.data import Dataset
-
+import nltk
 
 class Dictionary(object):
     def __init__(self, word2idx=None, idx2word=None):
@@ -15,9 +15,12 @@ class Dictionary(object):
             word2idx = {}
         if idx2word is None:
             idx2word = []
+	self.question_pos_pairs = {}
         self.word2idx = word2idx
         self.idx2word = idx2word
-
+	self.pos_tag_map = {}
+	self.pos_tag_id = 0
+   
     @property
     def ntoken(self):
         return len(self.word2idx)
@@ -25,6 +28,23 @@ class Dictionary(object):
     @property
     def padding_idx(self):
         return len(self.word2idx)
+
+    def create_pos_tag(self, sentence, question_id):
+	'''`
+	   Function to create pos tags for the questions and append them to a list 
+	   in order to access them while appending pos tags to GloVe embeddings in
+	   create_dictionary. 
+	'''
+	pos_tag_list = nltk.pos_tag(sentence)
+	question_pos_list = []
+
+	for word, tag in pos_tag_list:
+	    if word not in self.pos_tag_map.keys():
+		self.pos_tag_map[word] = self.pos_tag_id
+		self.pos_tag_id+=1  	
+	    question_pos_list.append(self.pos_tag_map[word])
+
+	self.question_pos_pairs[question_id] = question_pos_list
 
     def tokenize(self, sentence, add_word):
         sentence = sentence.lower()
@@ -43,12 +63,20 @@ class Dictionary(object):
         cPickle.dump([self.word2idx, self.idx2word], open(path, 'wb'))
         print('dictionary dumped to %s' % path)
 
+    def dump_to_postag_file(cls, path):
+	cPickle.dump([self.question_pos_pairs], open(path, 'wb'))
+	print('pos tags dumped to %s' %path)	
+
     @classmethod
     def load_from_file(cls, path):
         print('loading dictionary from %s' % path)
         word2idx, idx2word = cPickle.load(open(path, 'rb'))
+	# print ('loading pos tags from %s' %path)
+	# word_pos_pairs = cPickle.load(open(pos_path, 'rb'))
+	
         d = cls(word2idx, idx2word)
         return d
+	    
 
     def add_word(self, word):
         if word not in self.word2idx:
@@ -60,7 +88,7 @@ class Dictionary(object):
         return len(self.idx2word)
 
 
-def _create_entry(img, question, answer):
+def _create_entry(img, question, pos_tags, answer):
     answer.pop('image_id')
     answer.pop('question_id')
     entry = {
@@ -68,6 +96,7 @@ def _create_entry(img, question, answer):
         'image_id'    : question['image_id'],
         'image'       : img,
         'question'    : question['question'],
+	'pos_question': pos_tags,
         'answer'      : answer}
     return entry
 
@@ -86,6 +115,9 @@ def _load_dataset(dataroot, name, img_id2val):
     answer_path = os.path.join(dataroot, 'cache', '%s_target.pkl' % name)
     answers = cPickle.load(open(answer_path, 'rb'))
     answers = sorted(answers, key=lambda x: x['question_id'])
+    
+    pos_path = '../data/postag.pkl'
+    pos_question = cPickle.load(open(pos_path, 'rb')) 
 
     utils.assert_eq(len(questions), len(answers))
     entries = []
@@ -93,7 +125,7 @@ def _load_dataset(dataroot, name, img_id2val):
         utils.assert_eq(question['question_id'], answer['question_id'])
         utils.assert_eq(question['image_id'], answer['image_id'])
         img_id = question['image_id']
-        entries.append(_create_entry(img_id2val[img_id], question, answer))
+        entries.append(_create_entry(img_id2val[img_id], question, pos_tags, answer))
 
     return entries
 

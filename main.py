@@ -33,7 +33,7 @@ if __name__ == '__main__':
     train_dset = VQAFeatureDataset('train', dictionary)
     eval_dset = VQAFeatureDataset('val', dictionary)
     batch_size = args.batch_size
-
+'''
     constructor = 'build_%s' % args.model
     model = getattr(base_model, constructor)(train_dset, args.num_hid).cuda()
     model.w_emb.init_embedding('data/glove6b_init_300d.npy')
@@ -43,3 +43,4 @@ if __name__ == '__main__':
     train_loader = DataLoader(train_dset, batch_size, shuffle=True, num_workers=1)
     eval_loader =  DataLoader(eval_dset, batch_size, shuffle=True, num_workers=1)
     train(model, train_loader, eval_loader, args.epochs, args.output)
+'''
