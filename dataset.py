@@ -116,7 +116,7 @@ def _load_dataset(dataroot, name, img_id2val):
     answers = cPickle.load(open(answer_path, 'rb'))
     answers = sorted(answers, key=lambda x: x['question_id'])
     
-    pos_path = '../data/postag.pkl'
+    pos_path = 'data/postag.pkl'
     pos_question = cPickle.load(open(pos_path, 'rb')) 
 
     utils.assert_eq(len(questions), len(answers))
