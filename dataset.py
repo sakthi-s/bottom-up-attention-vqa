@@ -114,14 +114,18 @@ class VQAFeatureDataset(Dataset):
         self.img_id2idx = cPickle.load(
             open(os.path.join(dataroot, '%s36_imgid2idx.pkl' % name)))
         print('loading features from h5 file')
-        h5_path = os.path.join(dataroot, '%s36.hdf5' % name)
-        self.hf = h5py.File(h5_path, 'r')
+
+	vgg_h5_path = os.path.join(dataroot, 'img_%s_1.h5' % name)
+	self.vgg_h5 = h5py.File(vgg_h5_path, 'r')
+        rcnn_h5_path = os.path.join(dataroot, '%s36.hdf5' % name)
+        self.rcnn_hf = h5py.File(rcnn_h5_path, 'r')
         
         self.entries = _load_dataset(dataroot, name, self.img_id2idx)
 
         self.tokenize()
         self.tensorize()
         self.v_dim = 2048
+	self.v2_dim = 512
         self.s_dim = 6
 
     def tokenize(self, max_length=14):
@@ -160,8 +164,9 @@ class VQAFeatureDataset(Dataset):
 
     def __getitem__(self, index):
         entry = self.entries[index]
-        features = torch.from_numpy(np.array(self.hf['image_features'][entry['image']]))
-        spatials = torch.from_numpy(np.array(self.hf['spatial_features'][entry['image']]))
+        rcnn_feats = torch.from_numpy(np.array(self.rcnn_hf['image_features'][entry['image']]))
+        rcnn_spatials = torch.from_numpy(np.array(self.rcnn_hf['spatial_features'][entry['image']]))
+	vgg_feats = torch.from_numpy(np.array(self.vgg_h5['feats'][entry['image']]))
 
         question = entry['q_token']
         answer = entry['answer']
@@ -171,7 +176,7 @@ class VQAFeatureDataset(Dataset):
         if labels is not None:
             target.scatter_(0, labels, scores)
 
-        return features, spatials, question, target
+        return rcnn_feats, rcnn_spatials, question, target, vgg_feats
 
     def __len__(self):
         return len(self.entries)
