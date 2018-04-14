@@ -8,7 +8,7 @@ import h5py
 import torch
 from torch.utils.data import Dataset
 import nltk
-
+from nltk import word_tokenize
 class Dictionary(object):
     def __init__(self, word2idx=None, idx2word=None):
         if word2idx is None:
@@ -35,14 +35,17 @@ class Dictionary(object):
 	   in order to access them while appending pos tags to GloVe embeddings in
 	   create_dictionary. 
 	'''
+
+	sentence = word_tokenize(sentence)
 	pos_tag_list = nltk.pos_tag(sentence)
+
 	question_pos_list = []
 
 	for word, tag in pos_tag_list:
 	    if word not in self.pos_tag_map.keys():
-		self.pos_tag_map[word] = self.pos_tag_id
+		self.pos_tag_map[tag] = self.pos_tag_id
 		self.pos_tag_id+=1  	
-	    question_pos_list.append(self.pos_tag_map[word])
+	    question_pos_list.append(self.pos_tag_map[tag])
 
 	self.question_pos_pairs[question_id] = question_pos_list
 
@@ -63,7 +66,7 @@ class Dictionary(object):
         cPickle.dump([self.word2idx, self.idx2word], open(path, 'wb'))
         print('dictionary dumped to %s' % path)
 
-    def dump_to_postag_file(cls, path):
+    def dump_to_postag_file(self, path):
 	cPickle.dump([self.question_pos_pairs], open(path, 'wb'))
 	print('pos tags dumped to %s' %path)	
 
@@ -125,8 +128,8 @@ def _load_dataset(dataroot, name, img_id2val):
         utils.assert_eq(question['question_id'], answer['question_id'])
         utils.assert_eq(question['image_id'], answer['image_id'])
         img_id = question['image_id']
-        entries.append(_create_entry(img_id2val[img_id], question, pos_tags, answer))
-
+        entries.append(_create_entry(img_id2val[img_id], question, pos_question[question['question_id']], answer))
+	# import pdb; pdb.set_trace()
     return entries
 
 
@@ -175,7 +178,10 @@ class VQAFeatureDataset(Dataset):
     def tensorize(self):
         
         for entry in self.entries:
-            question = torch.from_numpy(np.array(entry['q_token']))
+	    pos_tokens = np.array(entry['pos_question'])
+	    q_tokens = np.append(np.array(entry['q_token']), pos_tokens[:6])
+	    print ("Pos tokens shape: ",pos_tokens.shape, " question tokens shape: ", q_tokens.shape)
+            question = torch.from_numpy(q_tokens)
             entry['q_token'] = question
 
             answer = entry['answer']
