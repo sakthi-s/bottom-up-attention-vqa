@@ -42,7 +42,7 @@ class Dictionary(object):
 	question_pos_list = []
 
 	for word, tag in pos_tag_list:
-	    if word not in self.pos_tag_map.keys():
+	    if tag not in self.pos_tag_map.keys():
 		self.pos_tag_map[tag] = self.pos_tag_id
 		self.pos_tag_id+=1  	
 	    question_pos_list.append(self.pos_tag_map[tag])
@@ -124,17 +124,17 @@ def _load_dataset(dataroot, name, img_id2val):
     print (type(pos_question[0]))
     utils.assert_eq(len(questions), len(answers))
     entries = []
-    i = 0
+    # i = 0
     for question, answer in zip(questions, answers):
         utils.assert_eq(question['question_id'], answer['question_id'])
         utils.assert_eq(question['image_id'], answer['image_id'])
         img_id = question['image_id']
-	if i % 100 ==0:
-	    print ("We are progressing with i = ",i)
-	    print (pos_question[0][question['question_id']])
+	# if i % 100 ==0:
+	#    print ("We are progressing with i = ",i)
+	#    print (pos_question[0][question['question_id']])
         entries.append(_create_entry(img_id2val[img_id], question, pos_question[0][question['question_id']], answer))
 	# import pdb; pdb.set_trace()
-	i+=1
+	# i+=1
     return entries
 
 
@@ -173,19 +173,25 @@ class VQAFeatureDataset(Dataset):
         for entry in self.entries:
             tokens = self.dictionary.tokenize(entry['question'], False)
             tokens = tokens[:max_length]
+            # import pdb; pdb.set_trace();
+            pos_tokens = list(np.array(entry['pos_question']))[:max_length]
             if len(tokens) < max_length:
                 # Note here we pad in front of the sentence
                 padding = [self.dictionary.padding_idx] * (max_length - len(tokens))
                 tokens = padding + tokens
-            utils.assert_eq(len(tokens), max_length)
+	    if len(pos_tokens) < max_length:
+		padding = [self.dictionary.padding_idx] * (max_length - len(pos_tokens))
+		pos_tokens = padding + pos_tokens
+            tokens = tokens + pos_tokens
+            utils.assert_eq(len(tokens), max_length*2)
             entry['q_token'] = tokens
 
     def tensorize(self):
         
         for entry in self.entries:
-	    pos_tokens = np.array(entry['pos_question'])
-	    q_tokens = np.append(np.array(entry['q_token']), pos_tokens[:6])
-	    print ("Pos tokens shape: ",pos_tokens.shape, " question tokens shape: ", q_tokens.shape)
+	  
+	    q_tokens = np.array(entry['q_token'])
+	    # print ("Pos tokens shape: ",pos_tokens.shape, " question tokens shape: ", q_tokens.shape)
             question = torch.from_numpy(q_tokens)
             entry['q_token'] = question
 

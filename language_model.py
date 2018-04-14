@@ -15,6 +15,7 @@ class WordEmbedding(nn.Module):
         self.emb = nn.Embedding(ntoken+1, emb_dim, padding_idx=ntoken)
         self.dropout = nn.Dropout(dropout)
         self.ntoken = ntoken
+	print ("hi there, I'm Lucas! :D", self.ntoken)
         self.emb_dim = emb_dim
 
     def init_embedding(self, np_file):
