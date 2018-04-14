@@ -121,15 +121,20 @@ def _load_dataset(dataroot, name, img_id2val):
     
     pos_path = 'data/postag.pkl'
     pos_question = cPickle.load(open(pos_path, 'rb')) 
-
+    print (type(pos_question[0]))
     utils.assert_eq(len(questions), len(answers))
     entries = []
+    i = 0
     for question, answer in zip(questions, answers):
         utils.assert_eq(question['question_id'], answer['question_id'])
         utils.assert_eq(question['image_id'], answer['image_id'])
         img_id = question['image_id']
-        entries.append(_create_entry(img_id2val[img_id], question, pos_question[question['question_id']], answer))
+	if i % 100 ==0:
+	    print ("We are progressing with i = ",i)
+	    print (pos_question[0][question['question_id']])
+        entries.append(_create_entry(img_id2val[img_id], question, pos_question[0][question['question_id']], answer))
 	# import pdb; pdb.set_trace()
+	i+=1
     return entries
 
 
