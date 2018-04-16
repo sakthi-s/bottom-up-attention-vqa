@@ -197,22 +197,24 @@ def compute_target(answers_dset, ans2label, questions_dset, name, cache_root='da
         no_no=0
         for answer in answers:
             answer_ = answer['answer']
-            if answer_.lower()=="yes":
-                no_yes+=1
-            elif answer_.lower()=="no":
-                no_no+=1
+            if ans_entry['answer_type'] == "yes/no":
+                if answer_.lower()=="yes":
+                    no_yes+=1
+                elif answer_.lower()=="no":
+                    no_no+=1
             answer_count[answer_] = answer_count.get(answer_, 0) + 1
         ''' Change values here'''
         #When ANSWER IS DEFINITELY YES FOR THIS IMAGE, PROBABILITY OF NO IS HIGHER FOR RANDOM
-        if (no_yes >  no_no):
-            new_answer_count["yes"]=0.2 
-            new_answer_count["no"]=0.8
-        elif no_no > no_yes: #When ANSWER IS DEFINITELY No FOR THIS IMAGE, PROBABILITY OF NO IS HIGHER FOR RANDOM but some probability for yes
-            new_answer_count["yes"]=0.2
-            new_answer_count["no"]=0.8
-        elif no_no == no_yes and no_yes !=0 and no_no !=0:
-            answer_count["yes"]=0.5
-            answer_count["no"]=0.5
+        if ans_entry['answer_type'] == "yes/no":
+            if (no_yes >  no_no):
+                new_answer_count["yes"]=0.2 
+                new_answer_count["no"]=0.8
+            elif no_no > no_yes: #When ANSWER IS DEFINITELY No FOR THIS IMAGE, PROBABILITY OF NO IS HIGHER FOR RANDOM but some probability for yes
+                new_answer_count["yes"]=0.2
+                new_answer_count["no"]=0.8
+            elif no_no == no_yes and no_yes !=0 and no_no !=0:
+                answer_count["yes"]=0.5
+                answer_count["no"]=0.5
 
 
         labels = []
