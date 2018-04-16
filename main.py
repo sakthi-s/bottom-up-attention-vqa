@@ -36,6 +36,7 @@ if __name__ == '__main__':
 
     constructor = 'build_%s' % args.model
     model = getattr(base_model, constructor)(train_dset, args.num_hid).cuda()
+    print (type(model))
     model.w_emb.init_embedding('data/glove6b_init_300d.npy')
 
     model = nn.DataParallel(model).cuda()

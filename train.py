@@ -33,13 +33,14 @@ def train(model, train_loader, eval_loader, num_epochs, output):
         train_score = 0
         t = time.time()
 
-        for i, (v, b, q, a) in enumerate(train_loader):
+        for i, (v, b, q, a, p) in enumerate(train_loader):
             v = Variable(v).cuda()
             b = Variable(b).cuda()
             q = Variable(q).cuda()
             a = Variable(a).cuda()
-
-            pred = model(v, b, q, a)
+	    p = Variable(p).cuda()
+	    # print (type(q), " ",q)
+            pred = model(v, b, q, a, p)
             loss = instance_bce_with_logits(pred, a)
             loss.backward()
             nn.utils.clip_grad_norm(model.parameters(), 0.25)
@@ -49,7 +50,7 @@ def train(model, train_loader, eval_loader, num_epochs, output):
             batch_score = compute_score_with_logits(pred, a.data).sum()
             total_loss += loss.data[0] * v.size(0)
             train_score += batch_score
-	    print "Iteration : ", i
+	    # print "Iteration : ", i
 
         total_loss /= len(train_loader.dataset)
         train_score = 100 * train_score / len(train_loader.dataset)
@@ -71,11 +72,12 @@ def evaluate(model, dataloader):
     score = 0
     upper_bound = 0
     num_data = 0
-    for v, b, q, a in iter(dataloader):
+    for v, b, q, a,p in iter(dataloader):
         v = Variable(v, volatile=True).cuda()
         b = Variable(b, volatile=True).cuda()
         q = Variable(q, volatile=True).cuda()
-        pred = model(v, b, q, None)
+	p = Variable(p, volatile=True).cuda()
+        pred = model(v, b, q, None, p)
         batch_score = compute_score_with_logits(pred, a.cuda()).sum()
         score += batch_score
         upper_bound += (a.max(1)[0]).sum()

@@ -91,7 +91,7 @@ class Dictionary(object):
         return len(self.idx2word)
 
 
-def _create_entry(img, question, pos_tags, answer):
+def _create_entry(img, question, answer,pos_tags):
     answer.pop('image_id')
     answer.pop('question_id')
     entry = {
@@ -99,8 +99,9 @@ def _create_entry(img, question, pos_tags, answer):
         'image_id'    : question['image_id'],
         'image'       : img,
         'question'    : question['question'],
+        'answer'      : answer,
 	'pos_question': pos_tags,
-        'answer'      : answer}
+	}
     return entry
 
 
@@ -121,7 +122,8 @@ def _load_dataset(dataroot, name, img_id2val):
     
     pos_path = 'data/postag.pkl'
     pos_question = cPickle.load(open(pos_path, 'rb')) 
-    print (type(pos_question[0]))
+    all_pos_tags = set()
+    all_pos_tags = set([x[0] for x in pos_question[0].values()])
     utils.assert_eq(len(questions), len(answers))
     entries = []
     # i = 0
@@ -132,7 +134,7 @@ def _load_dataset(dataroot, name, img_id2val):
 	# if i % 100 ==0:
 	#    print ("We are progressing with i = ",i)
 	#    print (pos_question[0][question['question_id']])
-        entries.append(_create_entry(img_id2val[img_id], question, pos_question[0][question['question_id']], answer))
+        entries.append(_create_entry(img_id2val[img_id], question, answer, pos_question[0][question['question_id']]))
 	# import pdb; pdb.set_trace()
 	# i+=1
     return entries
@@ -173,17 +175,16 @@ class VQAFeatureDataset(Dataset):
         for entry in self.entries:
             tokens = self.dictionary.tokenize(entry['question'], False)
             tokens = tokens[:max_length]
-            # import pdb; pdb.set_trace();
-            pos_tokens = list(np.array(entry['pos_question']))[:max_length]
             if len(tokens) < max_length:
                 # Note here we pad in front of the sentence
                 padding = [self.dictionary.padding_idx] * (max_length - len(tokens))
                 tokens = padding + tokens
+	    pos_tokens = list(np.array(entry['pos_question']))[:max_length]
 	    if len(pos_tokens) < max_length:
 		padding = [self.dictionary.padding_idx] * (max_length - len(pos_tokens))
 		pos_tokens = padding + pos_tokens
-            tokens = tokens + pos_tokens
-            utils.assert_eq(len(tokens), max_length*2)
+	    entry['pos_question'] = pos_tokens
+            utils.assert_eq(len(tokens), max_length)
             entry['q_token'] = tokens
 
     def tensorize(self):
@@ -214,13 +215,14 @@ class VQAFeatureDataset(Dataset):
 
         question = entry['q_token']
         answer = entry['answer']
+	pos_tokens = torch.from_numpy(np.array(entry['pos_question'])).float()
         labels = answer['labels']
         scores = answer['scores']
         target = torch.zeros(self.num_ans_candidates)
         if labels is not None:
             target.scatter_(0, labels, scores)
 
-        return features, spatials, question, target
+        return features, spatials, question, target, pos_tokens
 
     def __len__(self):
         return len(self.entries)

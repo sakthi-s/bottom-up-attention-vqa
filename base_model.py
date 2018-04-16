@@ -16,7 +16,7 @@ class BaseModel(nn.Module):
         self.v_net = v_net
         self.classifier = classifier
 
-    def forward(self, v, b, q, labels):
+    def forward(self, v, b, q, labels, p):
         """Forward
 
         v: [batch, num_objs, obj_dim]
@@ -26,8 +26,10 @@ class BaseModel(nn.Module):
         return: logits, not probs
         """
         w_emb = self.w_emb(q)
-        q_emb = self.q_emb(w_emb) # [batch, q_dim]
-
+	p = p.unsqueeze(2)
+	w_emb = torch.cat([w_emb, p], 2)
+	q_emb = self.q_emb(w_emb) # [batch, q_dim]
+	
         att = self.v_att(v, q_emb)
         v_emb = (att * v).sum(1) # [batch, v_dim]
 
@@ -40,7 +42,7 @@ class BaseModel(nn.Module):
 
 def build_baseline0(dataset, num_hid):
     w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
-    q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
+    q_emb = QuestionEmbedding(301, num_hid, 1, False, 0.0)
     v_att = Attention(dataset.v_dim, q_emb.num_hid, num_hid)
     q_net = FCNet([num_hid, num_hid])
     v_net = FCNet([dataset.v_dim, num_hid])
@@ -51,7 +53,7 @@ def build_baseline0(dataset, num_hid):
 
 def build_baseline0_newatt(dataset, num_hid):
     w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
-    q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
+    q_emb = QuestionEmbedding(301, num_hid, 1, False, 0.0)
     v_att = NewAttention(dataset.v_dim, q_emb.num_hid, num_hid)
     q_net = FCNet([q_emb.num_hid, num_hid])
     v_net = FCNet([dataset.v_dim, num_hid])
