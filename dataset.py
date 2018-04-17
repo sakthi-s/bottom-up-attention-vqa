@@ -171,7 +171,7 @@ class VQAFeatureDataset(Dataset):
         entry = self.entries[index]
         rcnn_feats = torch.from_numpy(np.array(self.frcn_hf['image_features'][entry['image']]))
         rcnn_spatials = torch.from_numpy(np.array(self.frcn_hf['spatial_features'][entry['image']]))
-        vgg_feats = torch.from_numpy(np.array(self.vgg_hf['feats'][entry['vgg_image']]))
+        vgg19_feats = torch.from_numpy(np.array(self.vgg19_hf['feats'][entry['vgg_image']]))
 
         question = entry['q_token']
         answer = entry['answer']
@@ -181,7 +181,7 @@ class VQAFeatureDataset(Dataset):
         if labels is not None:
             target.scatter_(0, labels, scores)
 
-        return rcnn_feats, rcnn_spatials, question, target, vgg_feats
+        return rcnn_feats, rcnn_spatials, question, target, vgg19_feats
 
     def __len__(self):
         return len(self.entries)
