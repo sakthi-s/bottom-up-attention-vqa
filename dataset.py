@@ -20,6 +20,7 @@ class Dictionary(object):
         self.idx2word = idx2word
 	self.pos_tag_map = {}
 	self.pos_tag_id = 0
+        self.pos_tag_groups = {"CD":0 , "J" : 1, "N": 2, "V":3, "WP":4, "WRB":5, "O":6}
    
     @property
     def ntoken(self):
@@ -42,10 +43,24 @@ class Dictionary(object):
 	question_pos_list = []
 
 	for word, tag in pos_tag_list:
-	    if tag not in self.pos_tag_map.keys():
-		self.pos_tag_map[tag] = self.pos_tag_id
-		self.pos_tag_id+=1  	
-	    question_pos_list.append(self.pos_tag_map[tag])
+	    if tag is "CD":
+		question_pos_list.append(self.pos_tag_groups[tag])
+	    elif tag.startswith("JJ"):
+		question_pos_list.append(self.pos_tag_groups["J"])
+	    elif tag.startswith("N"):
+		question_pos_list.append(self.pos_tag_groups["N"])
+            elif tag.startswith("V"):
+		question_pos_list.append(self.pos_tag_groups["V"])
+	    elif tag.startswith("WP"):
+		question_pos_list.append(self.pos_tag_groups["WP"])
+	    elif tag is "WRB":
+		question_pos_list.append(self.pos_tag_groups["WRB"])
+	    else:
+		question_pos_list.append(self.pos_tag_groups["O"])
+	    #if tag not in self.pos_tag_map.keys():
+		#self.pos_tag_map[tag] = self.pos_tag_id
+		#self.pos_tag_id+=1  	
+	    #question_pos_list.append(self.pos_tag_map[tag])
 
 	self.question_pos_pairs[question_id] = question_pos_list
 
