@@ -169,8 +169,8 @@ class VQAFeatureDataset(Dataset):
 
     def __getitem__(self, index):
         entry = self.entries[index]
-        rcnn_feats = torch.from_numpy(np.array(self.rcnn_hf['image_features'][entry['image']]))
-        rcnn_spatials = torch.from_numpy(np.array(self.rcnn_hf['spatial_features'][entry['image']]))
+        rcnn_feats = torch.from_numpy(np.array(self.frcn_hf['image_features'][entry['image']]))
+        rcnn_spatials = torch.from_numpy(np.array(self.frcn_hf['spatial_features'][entry['image']]))
         vgg_feats = torch.from_numpy(np.array(self.vgg_hf['feats'][entry['vgg_image']]))
 
         question = entry['q_token']
