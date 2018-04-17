@@ -31,3 +31,9 @@ rm data/v2_Annotations_Val_mscoco.zip
 wget -P data https://storage.googleapis.com/bottom-up-attention/trainval_36.zip
 unzip data/trainval_36.zip -d data
 rm data/trainval_36.zip
+
+
+#Lexvec embeddings
+wget -P data http://nlpserver2.inf.ufrgs.br/alexandres/vectors/lexvec.enwiki%2bnewscrawl.300d.W.pos.vectors.gz
+gzip -d data/lexvec.enwiki+newscrawl.300d.W.pos.vectors.gz
+rm data/lexvec.enwiki+newscrawl.300d.W.pos.vectors.gz
