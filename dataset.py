@@ -118,8 +118,8 @@ class VQAFeatureDataset(Dataset):
             open(os.path.join(dataroot, 'vgg19_%s_imgid2idx.pkl' % name)))
         print('loading features from faster rcnn and vgg19 h5 files')
 
-	    vgg19_h5_path = os.path.join(dataroot, 'img_%s.h5' % name)
-	    self.vgg19_hf = h5py.File(vgg19_h5_path, 'r')
+        vgg19_h5_path = os.path.join(dataroot, 'img_%s.h5' % name)
+        self.vgg19_hf = h5py.File(vgg19_h5_path, 'r')
         
         frcn_h5_path = os.path.join(dataroot, '%s36.hdf5' % name)
         self.frcn_hf = h5py.File(frcn_h5_path, 'r')
@@ -130,7 +130,7 @@ class VQAFeatureDataset(Dataset):
         self.tensorize()
         
         self.v_dim = 2048
-	    self.v2_dim = 512
+        self.v2_dim = 512
         self.s_dim = 6
 
     def tokenize(self, max_length=14):
@@ -171,7 +171,7 @@ class VQAFeatureDataset(Dataset):
         entry = self.entries[index]
         rcnn_feats = torch.from_numpy(np.array(self.rcnn_hf['image_features'][entry['image']]))
         rcnn_spatials = torch.from_numpy(np.array(self.rcnn_hf['spatial_features'][entry['image']]))
-    	vgg_feats = torch.from_numpy(np.array(self.vgg_hf['feats'][entry['vgg_image']]))
+        vgg_feats = torch.from_numpy(np.array(self.vgg_hf['feats'][entry['vgg_image']]))
 
         question = entry['q_token']
         answer = entry['answer']
