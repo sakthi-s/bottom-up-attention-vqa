@@ -25,21 +25,26 @@ import utils
 csv.field_size_limit(sys.maxsize)
 
 FIELDNAMES = ['image_id', 'image_w', 'image_h', 'num_boxes', 'boxes', 'features']
-infile = 'data/trainval_36/trainval_resnet101_faster_rcnn_genome_36.tsv'
-train_data_file = 'data/train36.hdf5'
-val_data_file = 'data/val36.hdf5'
+frcn_inflie = 'data/trainval_36/trainval_resnet101_faster_rcnn_genome_36.tsv'
+train_frcn_file = 'data/train36.hdf5'
+val_frcn_file = 'data/val36.hdf5'
 train_indices_file = 'data/train36_imgid2idx.pkl'
 val_indices_file = 'data/val36_imgid2idx.pkl'
 train_ids_file = 'data/train_ids.pkl'
 val_ids_file = 'data/val_ids.pkl'
+
+vgg19_train_infile = 'data/img_train.h5'
+vgg19_val_infile = 'data/img_val.h5'
+vgg19_train_indices_file = 'data/vgg19_train_imgid2idx.pkl'
+vgg19_val_indices_file = 'data/vgg19_val_imgid2idx.pkl'
 
 feature_length = 2048
 num_fixed_boxes = 36
 
 
 if __name__ == '__main__':
-    h_train = h5py.File(train_data_file, "w")
-    h_val = h5py.File(val_data_file, "w")
+    h_train = h5py.File(train_frcn_file, "w")
+    h_val = h5py.File(val_frcn_file, "w")
 
     if os.path.exists(train_ids_file) and os.path.exists(val_ids_file):
         train_imgids = cPickle.load(open(train_ids_file))
@@ -71,7 +76,7 @@ if __name__ == '__main__':
     val_counter = 0
 
     print("reading tsv...")
-    with open(infile, "r+b") as tsv_in_file:
+    with open(frcn_inflie, "r+b") as tsv_in_file:
         reader = csv.DictReader(tsv_in_file, delimiter='\t', fieldnames=FIELDNAMES)
         for item in reader:
             item['num_boxes'] = int(item['num_boxes'])
@@ -136,4 +141,22 @@ if __name__ == '__main__':
     cPickle.dump(val_indices, open(val_indices_file, 'wb'))
     h_train.close()
     h_val.close()
+
+
+    # VGG19 features
+    vgg19_train = h5py.File(vgg19_train_infile, 'r')
+    vgg19_val = h5py.File(vgg19_val_infile, 'r')
+
+    train_indices = {}
+    val_indices = {}
+    for idx, image_id in enumerate(vgg19_train['image_id']):
+        train_indices[image_id] = idx;
+
+    for idx, image_id in enumerate(vgg19_val['image_id']):
+        val_indices[image_id] = idx;
+
+    cPickle.dump(train_indices, open(vgg19_train_indices_file, 'wb'))
+    cPickle.dump(val_indices, open(vgg19_val_indices_file, 'wb'))
+    vgg19_val.close()
+    vgg19_train.close()
     print("done!")

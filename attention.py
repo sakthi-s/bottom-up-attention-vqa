@@ -54,3 +54,31 @@ class NewAttention(nn.Module):
         joint_repr = self.dropout(joint_repr)
         logits = self.linear(joint_repr)
         return logits
+
+class VGGAttention(nn.Module):
+    def __init__(self, v_dim, q_dim, num_hid, dropout=0.2):
+        super(VGGAttention, self).__init__()
+
+        self.v_proj = FCNet([v_dim, v_dim])
+        self.q_proj = FCNet([q_dim, v_dim])
+        self.dropout = nn.Dropout(dropout)
+        self.conv = weight_norm(nn.Conv2d(v_dim, 1, 1))
+
+    def forward(self, v, q):
+        """
+        v: [batch, k, vdim]
+        q: [batch, qdim]
+        """
+        batch, k, _, _ = v.size()
+        logits = self.logits(v, q, batch, k)
+        w = nn.functional.softmax(logits, 1)
+        w = w.view(batch, k, k, 1)
+        return w
+
+    def logits(self, v, q, batch, k):
+        q_proj = self.q_proj(q).unsqueeze(2).repeat(1, k, k, 1)
+        joint_repr = v_proj * q_proj
+        joint_repr = self.dropout(joint_repr)
+        logits = self.conv(joint_repr)
+        logits = logits.view(batch, k*k, 1)
+        return logits

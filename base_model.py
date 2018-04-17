@@ -1,22 +1,24 @@
 import torch
 import torch.nn as nn
-from attention import Attention, NewAttention
+from attention import Attention, NewAttention, VGGAttention
 from language_model import WordEmbedding, QuestionEmbedding
 from classifier import SimpleClassifier
 from fc import FCNet
 
 
 class BaseModel(nn.Module):
-    def __init__(self, w_emb, q_emb, v_att, q_net, v_net, classifier):
+    def __init__(self, w_emb, q_emb, v_att, v2_att, q_net, q2_net, v_net, classifier):
         super(BaseModel, self).__init__()
         self.w_emb = w_emb
         self.q_emb = q_emb
         self.v_att = v_att
+        self.v2_att = v2_att
         self.q_net = q_net
+        self.q2_net = q2_net
         self.v_net = v_net
         self.classifier = classifier
 
-    def forward(self, v, b, q, labels):
+    def forward(self, v, b, q, labels, v2):
         """Forward
 
         v: [batch, num_objs, obj_dim]
@@ -29,11 +31,22 @@ class BaseModel(nn.Module):
         q_emb = self.q_emb(w_emb) # [batch, q_dim]
 
         att = self.v_att(v, q_emb)
+        att2 = self.v2_att(v2, q_emb)
+
         v_emb = (att * v).sum(1) # [batch, v_dim]
+        batch, k, _, _ = v2.size()
+        v2_emb = (att * v2).view(batch, k*k, -1)
+        v2_emb = v2_emb.sum(1)
 
         q_repr = self.q_net(q_emb)
         v_repr = self.v_net(v_emb)
-        joint_repr = q_repr * v_repr
+        joint1_repr = q_repr * v_repr
+
+        q2_repr = self.q2_net(q_emb)
+        joint2_repr = q2_repr * v2_emb
+
+        joint_repr = torch.cat((joint1_repr, joint2_repr))
+
         logits = self.classifier(joint_repr)
         return logits
 
@@ -53,8 +66,10 @@ def build_baseline0_newatt(dataset, num_hid):
     w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
     q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
     v_att = NewAttention(dataset.v_dim, q_emb.num_hid, num_hid)
+    v2_att = VGGAttention(dataset.v2_dim, q_emb.num_hid, num_hid)
     q_net = FCNet([q_emb.num_hid, num_hid])
+    q2_net = FCNet([q_emb.num_hid, dataset.v2_dim])
     v_net = FCNet([dataset.v_dim, num_hid])
     classifier = SimpleClassifier(
-        num_hid, num_hid * 2, dataset.num_ans_candidates, 0.5)
-    return BaseModel(w_emb, q_emb, v_att, q_net, v_net, classifier)
+        num_hid + dataset.v2_dim, num_hid * 2, dataset.num_ans_candidates, 0.5)
+    return BaseModel(w_emb, q_emb, v_att, v2_att, q_net, q2_net, v_net, classifier)

@@ -60,19 +60,20 @@ class Dictionary(object):
         return len(self.idx2word)
 
 
-def _create_entry(img, question, answer):
+def _create_entry(img, vgg_img, question, answer):
     answer.pop('image_id')
     answer.pop('question_id')
     entry = {
         'question_id' : question['question_id'],
         'image_id'    : question['image_id'],
         'image'       : img,
+        'vgg_image'   : vgg_img,
         'question'    : question['question'],
         'answer'      : answer}
     return entry
 
 
-def _load_dataset(dataroot, name, img_id2val):
+def _load_dataset(dataroot, name, img_id2val, vgg19_img_id2val):
     """Load entries
 
     img_id2val: dict {img_id -> val} val can be used to retrieve image or features
@@ -93,7 +94,7 @@ def _load_dataset(dataroot, name, img_id2val):
         utils.assert_eq(question['question_id'], answer['question_id'])
         utils.assert_eq(question['image_id'], answer['image_id'])
         img_id = question['image_id']
-        entries.append(_create_entry(img_id2val[img_id], question, answer))
+        entries.append(_create_entry(img_id2val[img_id], vgg19_img_id2val[img_id], question, answer))
 
     return entries
 
@@ -113,19 +114,23 @@ class VQAFeatureDataset(Dataset):
 
         self.img_id2idx = cPickle.load(
             open(os.path.join(dataroot, '%s36_imgid2idx.pkl' % name)))
-        print('loading features from h5 file')
+        self.vgg19_img_id2idx = cPickle.load(
+            open(os.path.join(dataroot, 'vgg19_%s_imgid2idx.pkl' % name)))
+        print('loading features from faster rcnn and vgg19 h5 files')
 
-	vgg_h5_path = os.path.join(dataroot, 'img_%s_1.h5' % name)
-	self.vgg_h5 = h5py.File(vgg_h5_path, 'r')
-        rcnn_h5_path = os.path.join(dataroot, '%s36.hdf5' % name)
-        self.rcnn_hf = h5py.File(rcnn_h5_path, 'r')
+	    vgg19_h5_path = os.path.join(dataroot, 'img_%s.h5' % name)
+	    self.vgg19_hf = h5py.File(vgg19_h5_path, 'r')
         
-        self.entries = _load_dataset(dataroot, name, self.img_id2idx)
+        frcn_h5_path = os.path.join(dataroot, '%s36.hdf5' % name)
+        self.frcn_hf = h5py.File(frcn_h5_path, 'r')
+        
+        self.entries = _load_dataset(dataroot, name, self.img_id2idx, self.vgg19_img_id2idx)
 
         self.tokenize()
         self.tensorize()
+        
         self.v_dim = 2048
-	self.v2_dim = 512
+	    self.v2_dim = 512
         self.s_dim = 6
 
     def tokenize(self, max_length=14):
@@ -166,7 +171,7 @@ class VQAFeatureDataset(Dataset):
         entry = self.entries[index]
         rcnn_feats = torch.from_numpy(np.array(self.rcnn_hf['image_features'][entry['image']]))
         rcnn_spatials = torch.from_numpy(np.array(self.rcnn_hf['spatial_features'][entry['image']]))
-	vgg_feats = torch.from_numpy(np.array(self.vgg_h5['feats'][entry['image']]))
+    	vgg_feats = torch.from_numpy(np.array(self.vgg_hf['feats'][entry['vgg_image']]))
 
         question = entry['q_token']
         answer = entry['answer']
