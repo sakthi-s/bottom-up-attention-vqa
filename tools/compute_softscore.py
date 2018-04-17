@@ -205,7 +205,7 @@ def compute_target(answers_dset, ans2label, questions_dset, name, cache_root='da
             answer_count[answer_] = answer_count.get(answer_, 0) + 1
         ''' Change values here'''
         #When ANSWER IS DEFINITELY YES FOR THIS IMAGE, PROBABILITY OF NO IS HIGHER FOR RANDOM
-        if ans_entry['answer_type'] == "yes/no":
+        if ans_entry['answer_type'] == "yes/no" and name == 'train':
             if (no_yes >  no_no):
                 new_answer_count["yes"]=0.2 
                 new_answer_count["no"]=0.8
@@ -239,7 +239,7 @@ def compute_target(answers_dset, ans2label, questions_dset, name, cache_root='da
             'question': que_entry['question']
             })
 
-        if bool(new_answer_count):
+        if bool(new_answer_count) and name == 'train':
             new_labels=[]
             new_scores=[]
             for answer in new_answer_count:
