@@ -28,7 +28,8 @@ def create_glove_embedding_init(idx2word, glove_file):
     word2emb = {}
     with open(glove_file, 'r') as f:
         entries = f.readlines()
-    emb_dim = len(entries[0].split(' ')) - 1
+    emb_dim = len(entries[1].split(' ')) - 1
+    print(entries[1])
     print('embedding dim is %d' % emb_dim)
     weights = np.zeros((len(idx2word), emb_dim), dtype=np.float32)
 
@@ -50,6 +51,7 @@ if __name__ == '__main__':
 
     d = Dictionary.load_from_file('data/dictionary.pkl')
     emb_dim = 300
-    glove_file = 'data/glove/glove.6B.%dd.txt' % emb_dim
+    # glove_file = 'data/glove/glove.6B.%dd.txt' % emb_dim
+    glove_file='data/lexvec.enwiki+newscrawl.300d.W.pos.vectors'
     weights, word2emb = create_glove_embedding_init(d.idx2word, glove_file)
     np.save('data/glove6b_init_%dd.npy' % emb_dim, weights)
