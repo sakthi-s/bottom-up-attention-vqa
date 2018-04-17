@@ -76,8 +76,8 @@ class VGGAttention(nn.Module):
         return w
 
     def logits(self, v, q, batch, k):
-        q_proj = self.q_proj(q).unsqueeze(2).repeat(1, k, k, 1)
-        joint_repr = v_proj * q_proj
+        q_proj = self.q_proj(q).view(batch, 1, 1, -1).repeat(1, k, k, 1)
+        joint_repr = v * q_proj
         joint_repr = self.dropout(joint_repr)
         logits = self.conv(joint_repr)
         logits = logits.view(batch, k*k, 1)
