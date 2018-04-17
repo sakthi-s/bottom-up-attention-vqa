@@ -31,3 +31,12 @@ rm data/v2_Annotations_Val_mscoco.zip
 wget -P data https://storage.googleapis.com/bottom-up-attention/trainval_36.zip
 unzip data/trainval_36.zip -d data
 rm data/trainval_36.zip
+
+# Complementary Images
+wget -P data http://visualqa.org/data/mscoco/vqa/v2_Complementary_Pairs_Train_mscoco.zip
+unzip data/v2_Complementary_Pairs_Train_mscoco.zip -d data
+rm data/v2_Complementary_Pairs_Train_mscoco.zip
+
+wget -P data http://visualqa.org/data/mscoco/vqa/v2_Complementary_Pairs_Val_mscoco.zip
+unzip data/v2_Complementary_Pairs_Val_mscoco.zip -d data
+rm data/v2_Complementary_Pairs_Val_mscoco.zip
