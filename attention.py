@@ -59,7 +59,6 @@ class VGGAttention(nn.Module):
     def __init__(self, v_dim, q_dim, num_hid, dropout=0.2):
         super(VGGAttention, self).__init__()
 
-        self.v_proj = FCNet([v_dim, v_dim])
         self.q_proj = FCNet([q_dim, v_dim])
         self.dropout = nn.Dropout(dropout)
         self.conv = weight_norm(nn.Conv2d(v_dim, 1, 1))
@@ -76,9 +75,9 @@ class VGGAttention(nn.Module):
         return w
 
     def logits(self, v, q, batch, k):
-        q_proj = self.q_proj(q).view(batch, 1, 1, -1).repeat(1, k, k, 1)
+        q_proj = self.q_proj(q).view(batch, -1, 1, 1).repeat(1, 1, k, k)
         joint_repr = v * q_proj
         joint_repr = self.dropout(joint_repr)
         logits = self.conv(joint_repr)
-        logits = logits.view(batch, k*k, 1)
+        logits = logits.view(batch, k*k)
         return logits
