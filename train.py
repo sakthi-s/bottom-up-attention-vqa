@@ -83,3 +83,24 @@ def evaluate(model, dataloader):
     score = score / len(dataloader.dataset)
     upper_bound = upper_bound / len(dataloader.dataset)
     return score, upper_bound
+
+
+def test(model, dataloader, label2ans):
+
+    for v, b, q, a in iter(dataloader):
+        v = Variable(v, volatile=True).cuda()
+        b = Variable(b, volatile=True).cuda()
+        q = Variable(q, volatile=True).cuda()
+        
+        pred = model(v, b, q, None)
+        import pdb; pdb.set_trace()
+        _, idx = (pred.max(1)[0])
+
+        for i, qid in enumerate(a):
+                    result.append({
+                        'question_id': qid,
+                        'answer': label2ans[idx[i]]
+                    })
+
+    json.dump(result, open('result.json', 'w'))
+    print ('Validation done')

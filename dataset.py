@@ -60,15 +60,24 @@ class Dictionary(object):
         return len(self.idx2word)
 
 
-def _create_entry(img, question, answer):
-    answer.pop('image_id')
-    answer.pop('question_id')
-    entry = {
-        'question_id' : question['question_id'],
-        'image_id'    : question['image_id'],
-        'image'       : img,
-        'question'    : question['question'],
-        'answer'      : answer}
+def _create_entry(name, img, question, answer):
+    
+    if name in ['train', 'val']:
+        answer.pop('image_id')
+        answer.pop('question_id')
+        entry = {
+            'question_id' : question['question_id'],
+            'image_id'    : question['image_id'],
+            'image'       : img,
+            'question'    : question['question'],
+            'answer'      : answer}
+    else:
+        entry = {
+            'question_id' : question['question_id'],
+            'image_id'    : question['image_id'],
+            'image'       : img,
+            'question'    : question['question'],
+            'answer'      : answer}
     return entry
 
 
@@ -93,15 +102,42 @@ def _load_dataset(dataroot, name, img_id2val):
         utils.assert_eq(question['question_id'], answer['question_id'])
         utils.assert_eq(question['image_id'], answer['image_id'])
         img_id = question['image_id']
-        entries.append(_create_entry(img_id2val[img_id], question, answer))
+        entries.append(_create_entry(name, img_id2val[img_id], question, answer))
+
+    return entries
+
+def _load_test_dataset(dataroot, name, test_set, img_id2val):
+    """Load entries
+
+    img_id2val: dict {img_id -> val} val can be used to retrieve image or features
+    dataroot: root path of dataset
+    name: 'test'
+    """
+    if test_set == 'std':
+        question_path = os.path.join(
+            dataroot, 'v2_OpenEnded_mscoco_%s2015_questions.json' % name)
+
+    else:
+        question_path = os.path.join(
+            dataroot, 'v2_OpenEnded_mscoco_%s-dev2015_questions.json' % name)
+
+    questions = sorted(json.load(open(question_path))['questions'],
+                       key=lambda x: x['question_id'])
+    entries = []
+    answer = {}
+    answer['labels'] = None
+    answer['scores'] = 'test'
+    for question in questions:
+        img_id = question['image_id']
+        entries.append(_create_entry(name, img_id2val[img_id], question, answer))
 
     return entries
 
 
 class VQAFeatureDataset(Dataset):
-    def __init__(self, name, dictionary, dataroot='data'):
+    def __init__(self, name, test_set, dictionary, dataroot='data'):
         super(VQAFeatureDataset, self).__init__()
-        assert name in ['train', 'val']
+        assert name in ['train', 'val', 'test']
 
         ans2label_path = os.path.join(dataroot, 'cache', 'trainval_ans2label.pkl')
         label2ans_path = os.path.join(dataroot, 'cache', 'trainval_label2ans.pkl')
@@ -117,7 +153,10 @@ class VQAFeatureDataset(Dataset):
         h5_path = os.path.join(dataroot, '%s36.hdf5' % name)
         self.hf = h5py.File(h5_path, 'r')
         
-        self.entries = _load_dataset(dataroot, name, self.img_id2idx)
+        if name in ['train', 'val']:
+            self.entries = _load_dataset(dataroot, name, self.img_id2idx)
+        else:
+            self.entries = _load_test_dataset(dataroot, name, test_set, self.img_id2idx)
 
         self.tokenize()
         self.tensorize()
@@ -167,9 +206,14 @@ class VQAFeatureDataset(Dataset):
         answer = entry['answer']
         labels = answer['labels']
         scores = answer['scores']
-        target = torch.zeros(self.num_ans_candidates)
-        if labels is not None:
-            target.scatter_(0, labels, scores)
+        
+        if scores == 'test':
+            target = torch.from_numpy(np.array(entry['question_id']))
+        else:
+            target = torch.zeros(self.num_ans_candidates)
+            if labels is not None:
+                target.scatter_(0, labels, scores)
+
 
         return features, spatials, question, target
 
