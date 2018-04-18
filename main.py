@@ -24,6 +24,15 @@ def parse_args():
     return args
 
 
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
 if __name__ == '__main__':
     args = parse_args()
 
@@ -36,7 +45,7 @@ if __name__ == '__main__':
     batch_size = args.batch_size
     constructor = 'build_%s' % args.model
 
-    if args.train:    
+    if str2bool(args.train):    
 
         train_dset = VQAFeatureDataset('train', None, dictionary)
         eval_dset = VQAFeatureDataset('val', None, dictionary)
