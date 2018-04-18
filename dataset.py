@@ -114,10 +114,12 @@ def _load_test_dataset(dataroot, name, test_set, img_id2val):
     name: 'test'
     """
     if test_set == 'std':
+        print('loading features from test-std questions file')
         question_path = os.path.join(
             dataroot, 'v2_OpenEnded_mscoco_%s2015_questions.json' % name)
 
     else:
+        print('loading features from test-dev questions file')
         question_path = os.path.join(
             dataroot, 'v2_OpenEnded_mscoco_%s-dev2015_questions.json' % name)
 
@@ -126,7 +128,7 @@ def _load_test_dataset(dataroot, name, test_set, img_id2val):
     entries = []
     answer = {}
     answer['labels'] = None
-    answer['scores'] = 'test'
+    answer['scores'] = -1
     for question in questions:
         img_id = question['image_id']
         entries.append(_create_entry(name, img_id2val[img_id], question, answer))
@@ -207,7 +209,7 @@ class VQAFeatureDataset(Dataset):
         labels = answer['labels']
         scores = answer['scores']
         
-        if scores == 'test':
+        if scores == -1:
             target = torch.from_numpy(np.array(entry['question_id']))
         else:
             target = torch.zeros(self.num_ans_candidates)
