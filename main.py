@@ -32,13 +32,14 @@ if __name__ == '__main__':
     torch.backends.cudnn.benchmark = True
 
     dictionary = Dictionary.load_from_file('data/dictionary.pkl')
-    train_dset = VQAFeatureDataset('train', None, dictionary)
-    eval_dset = VQAFeatureDataset('val', None, dictionary)
 
     batch_size = args.batch_size
     constructor = 'build_%s' % args.model
 
     if args.train:    
+
+        train_dset = VQAFeatureDataset('train', None, dictionary)
+        eval_dset = VQAFeatureDataset('val', None, dictionary)
 
         model = getattr(base_model, constructor)(train_dset, args.num_hid).cuda() 
         model.w_emb.init_embedding('data/glove6b_init_300d.npy')
@@ -57,7 +58,7 @@ if __name__ == '__main__':
         model = getattr(base_model, constructor)(teststd_dset, args.num_hid).cuda()
         model.w_emb.init_embedding('data/glove6b_init_300d.npy')
         model.load_state_dict(torch.load(args.modelpath))
-        
+
         teststd_loader =  DataLoader(teststd_dset, batch_size, shuffle=True, num_workers=1)
         testdev_loader =  DataLoader(teststd_dset, batch_size, shuffle=True, num_workers=1)
         test(model, teststd_loader, teststd_dset.label2ans)
