@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import utils
 from torch.autograd import Variable
-
+import json
 
 def instance_bce_with_logits(logits, labels):
     assert logits.dim() == 2
@@ -85,22 +85,24 @@ def evaluate(model, dataloader):
     return score, upper_bound
 
 
-def test(model, dataloader, label2ans):
-
-    for v, b, q, a in iter(dataloader):
+def test(model, dataloader, label2ans, test_set):
+	
+    result = []	
+    batch_num = 1
+    for v, b, q, qids in iter(dataloader):
         v = Variable(v, volatile=True).cuda()
         b = Variable(b, volatile=True).cuda()
         q = Variable(q, volatile=True).cuda()
         
         pred = model(v, b, q, None)
-        import pdb; pdb.set_trace()
-        _, idx = (pred.max(1)[0])
-
-        for i, qid in enumerate(a):
+        _, idx = pred.max(1)
+	
+	print("Batch num: ", batch_num)
+	batch_num += 1
+        for i, qid in enumerate(qids):
                     result.append({
-                        'question_id': qid,
-                        'answer': label2ans[idx[i]]
+                        'question_id': torch.autograd.Variable(qid).data.cpu().numpy()[0],
+                        'answer': label2ans[idx[i].data[0]]
                     })
-
-    json.dump(result, open('result.json', 'w'))
+    json.dump(result, open('result_test'+test_set+'.json', 'w'))
     print ('Validation done')

@@ -68,7 +68,7 @@ if __name__ == '__main__':
         model = nn.DataParallel(model).cuda()
         model.load_state_dict(torch.load(args.modelpath))
 
-        teststd_loader =  DataLoader(teststd_dset, batch_size, shuffle=True, num_workers=1)
-        testdev_loader =  DataLoader(teststd_dset, batch_size, shuffle=True, num_workers=1)
-        test(model, teststd_loader, teststd_dset.label2ans)
-        test(model, testdev_loader, testdev_dset.label2ans)
+        teststd_loader =  DataLoader(teststd_dset, batch_size, shuffle=False, num_workers=4)
+        testdev_loader =  DataLoader(teststd_dset, batch_size, shuffle=False, num_workers=4)
+        test(model, teststd_loader, teststd_dset.label2ans, 'std')
+        test(model, testdev_loader, testdev_dset.label2ans, 'dev')

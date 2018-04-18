@@ -275,9 +275,10 @@ class VQATestFeatureDataset(Dataset):
         entry = self.entries[index]
         features = torch.from_numpy(np.array(self.hf['image_features'][entry['image']]))
         spatials = torch.from_numpy(np.array(self.hf['spatial_features'][entry['image']]))
-
+	
         question = entry['q_token']
-        target = torch.from_numpy(np.array(entry['question_id']))
+	#print("question id: %d", entry['question_id'])
+        target = torch.from_numpy(np.array([entry['question_id']]))
 
         return features, spatials, question, target
 
