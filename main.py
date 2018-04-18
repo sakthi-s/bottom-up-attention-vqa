@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import numpy as np
 
-from dataset import Dictionary, VQAFeatureDataset
+from dataset import Dictionary, VQAFeatureDataset, VQATestFeatureDataset
 import base_model
 from train import train, test
 import utils
@@ -61,8 +61,8 @@ if __name__ == '__main__':
 
     else:
 
-        teststd_dset = VQAFeatureDataset('val', 'std', dictionary)
-        testdev_dset = VQAFeatureDataset('val', 'dev', dictionary)
+        teststd_dset = VQATestFeatureDataset('val', 'std', dictionary)
+        testdev_dset = VQATestFeatureDataset('val', 'dev', dictionary)
         
         model = getattr(base_model, constructor)(teststd_dset, args.num_hid).cuda()
         model = nn.DataParallel(model).cuda()
