@@ -65,7 +65,7 @@ if __name__ == '__main__':
         testdev_dset = VQAFeatureDataset('val', 'dev', dictionary)
         
         model = getattr(base_model, constructor)(teststd_dset, args.num_hid).cuda()
-        model.w_emb.init_embedding('data/glove6b_init_300d.npy')
+        model = nn.DataParallel(model).cuda()
         model.load_state_dict(torch.load(args.modelpath))
 
         teststd_loader =  DataLoader(teststd_dset, batch_size, shuffle=True, num_workers=1)
