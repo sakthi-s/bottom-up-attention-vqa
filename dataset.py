@@ -215,7 +215,7 @@ def _load_test_dataset(dataroot, name, test_set, img_id2val):
     entries = []
     for question in questions:
         img_id = question['image_id']
-        entries.append(_create_test_entry(img_id2val[img_id], question, answer))
+        entries.append(_create_test_entry(img_id2val[img_id], question))
 
     return entries
 

@@ -18,7 +18,7 @@ def parse_args():
     parser.add_argument('--output', type=str, default='saved_models/exp0')
     parser.add_argument('--batch_size', type=int, default=512)
     parser.add_argument('--seed', type=int, default=1111, help='random seed')
-    parser.add_argument('--train', type=bool, default=True, help='True/False')
+    parser.add_argument('--train', type=str, default=True, help='True/False')
     parser.add_argument('--modelpath', type=str, default='saved_models/exp0/model.pth')
     args = parser.parse_args()
     return args
@@ -61,8 +61,8 @@ if __name__ == '__main__':
 
     else:
 
-        teststd_dset = VQATestFeatureDataset('val', 'std', dictionary)
-        testdev_dset = VQATestFeatureDataset('val', 'dev', dictionary)
+        teststd_dset = VQATestFeatureDataset('test', 'std', dictionary)
+        testdev_dset = VQATestFeatureDataset('test', 'dev', dictionary)
         
         model = getattr(base_model, constructor)(teststd_dset, args.num_hid).cuda()
         model = nn.DataParallel(model).cuda()
