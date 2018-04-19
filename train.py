@@ -93,6 +93,7 @@ def trainval(model, train_loader, eval_loader, num_epochs, output):
             batch_score = compute_score_with_logits(pred, a.data).sum()
             total_loss += loss.data[0] * v.size(0)
             train_score += batch_score
+	    print "Iteration number: ", i
 
         for i, (v, b, q, a) in enumerate(eval_loader):
             v = Variable(v).cuda()
@@ -110,6 +111,7 @@ def trainval(model, train_loader, eval_loader, num_epochs, output):
             batch_score = compute_score_with_logits(pred, a.data).sum()
             total_loss += loss.data[0] * v.size(0)
             train_score += batch_score
+	    print "Iteration number: ", i
 
         total_loss /= len(train_loader.dataset + eval_loader.dataset)
         train_score = 100 * train_score / len(train_loader.dataset + eval_loader.dataset)

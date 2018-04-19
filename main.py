@@ -6,7 +6,7 @@ import numpy as np
 
 from dataset import Dictionary, VQAFeatureDataset, VQATestFeatureDataset
 import base_model
-from train import train, test
+from train import train, trainval, test
 import utils
 
 
@@ -18,8 +18,8 @@ def parse_args():
     parser.add_argument('--output', type=str, default='saved_models/exp0')
     parser.add_argument('--batch_size', type=int, default=512)
     parser.add_argument('--seed', type=int, default=1111, help='random seed')
-    parser.add_argument('--train', type=str, default=True, help='True/False')
-    parser.add_argument('--trainval', type=str, default=True, help='True/False')
+    parser.add_argument('--train', type=str, default='True', help='True/False')
+    parser.add_argument('--trainval', type=str, default='True', help='True/False')
     parser.add_argument('--modelpath', type=str, default='saved_models/exp0/model.pth')
     args = parser.parse_args()
     return args
@@ -64,7 +64,7 @@ if __name__ == '__main__':
             train(model, train_loader, eval_loader, args.epochs, args.output)
 
     else:
-
+	print "Testing phase .."
         teststd_dset = VQATestFeatureDataset('test', 'std', dictionary)
         testdev_dset = VQATestFeatureDataset('test', 'dev', dictionary)
         
