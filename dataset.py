@@ -61,6 +61,7 @@ class Dictionary(object):
 
 
 def _create_entry(img, question, answer):
+    
     answer.pop('image_id')
     answer.pop('question_id')
     entry = {
@@ -99,9 +100,9 @@ def _load_dataset(dataroot, name, img_id2val):
 
 
 class VQAFeatureDataset(Dataset):
-    def __init__(self, name, dictionary, dataroot='data'):
+    def __init__(self, name, test_set, dictionary, dataroot='data'):
         super(VQAFeatureDataset, self).__init__()
-        assert name in ['train', 'val']
+        assert name in ['train', 'val', 'test']
 
         ans2label_path = os.path.join(dataroot, 'cache', 'trainval_ans2label.pkl')
         label2ans_path = os.path.join(dataroot, 'cache', 'trainval_label2ans.pkl')
@@ -118,9 +119,9 @@ class VQAFeatureDataset(Dataset):
         self.hf = h5py.File(h5_path, 'r')
         
         self.entries = _load_dataset(dataroot, name, self.img_id2idx)
-
         self.tokenize()
         self.tensorize()
+
         self.v_dim = 2048
         self.s_dim = 6
 
@@ -158,6 +159,7 @@ class VQAFeatureDataset(Dataset):
                 entry['answer']['labels'] = None
                 entry['answer']['scores'] = None
 
+
     def __getitem__(self, index):
         entry = self.entries[index]
         features = torch.from_numpy(np.array(self.hf['image_features'][entry['image']]))
@@ -167,9 +169,116 @@ class VQAFeatureDataset(Dataset):
         answer = entry['answer']
         labels = answer['labels']
         scores = answer['scores']
+        
+
         target = torch.zeros(self.num_ans_candidates)
         if labels is not None:
             target.scatter_(0, labels, scores)
+
+
+        return features, spatials, question, target
+
+    def __len__(self):
+        return len(self.entries)
+
+
+
+def _create_test_entry(img, question):
+    
+    entry = {
+        'question_id' : question['question_id'],
+        'image_id'    : question['image_id'],
+        'image'       : img,
+        'question'    : question['question']}
+    return entry
+
+
+def _load_test_dataset(dataroot, name, test_set, img_id2val):
+    """Load entries
+
+    img_id2val: dict {img_id -> val} val can be used to retrieve image or features
+    dataroot: root path of dataset
+    name: 'test'
+    """
+    if test_set == 'std':
+        print('loading features from test-std questions file')
+        question_path = os.path.join(
+            dataroot, 'v2_OpenEnded_mscoco_%s2015_questions.json' % name)
+
+    else:
+        print('loading features from test-dev questions file')
+        question_path = os.path.join(
+            dataroot, 'v2_OpenEnded_mscoco_%s-dev2015_questions.json' % name)
+
+    questions = sorted(json.load(open(question_path))['questions'],
+                       key=lambda x: x['question_id'])
+    entries = []
+    for question in questions:
+        img_id = question['image_id']
+        entries.append(_create_test_entry(img_id2val[img_id], question))
+
+    return entries
+
+
+
+class VQATestFeatureDataset(Dataset):
+    def __init__(self, name, test_set, dictionary, dataroot='data'):
+        super(VQATestFeatureDataset, self).__init__()
+        assert name in ['train', 'val', 'test']
+
+        ans2label_path = os.path.join(dataroot, 'cache', 'trainval_ans2label.pkl')
+        label2ans_path = os.path.join(dataroot, 'cache', 'trainval_label2ans.pkl')
+        self.ans2label = cPickle.load(open(ans2label_path, 'rb'))
+        self.label2ans = cPickle.load(open(label2ans_path, 'rb'))
+        self.num_ans_candidates = len(self.ans2label)
+
+        self.dictionary = dictionary
+
+        self.img_id2idx = cPickle.load(
+            open(os.path.join(dataroot, '%s36_imgid2idx.pkl' % name)))
+        print('loading features from h5 file')
+        h5_path = os.path.join(dataroot, '%s36.hdf5' % name)
+        self.hf = h5py.File(h5_path, 'r')
+        
+
+        self.entries = _load_test_dataset(dataroot, name, test_set, self.img_id2idx)
+        self.tokenize()
+        self.tensorize()
+
+        self.v_dim = 2048
+        self.s_dim = 6
+
+    def tokenize(self, max_length=14):
+        """Tokenizes the questions.
+
+        This will add q_token in each entry of the dataset.
+        -1 represent nil, and should be treated as padding_idx in embedding
+        """
+        for entry in self.entries:
+            tokens = self.dictionary.tokenize(entry['question'], False)
+            tokens = tokens[:max_length]
+            if len(tokens) < max_length:
+                # Note here we pad in front of the sentence
+                padding = [self.dictionary.padding_idx] * (max_length - len(tokens))
+                tokens = padding + tokens
+            utils.assert_eq(len(tokens), max_length)
+            entry['q_token'] = tokens
+
+    def tensorize(self):
+        
+        for entry in self.entries:
+            question = torch.from_numpy(np.array(entry['q_token']))
+            entry['q_token'] = question
+
+
+    def __getitem__(self, index):
+        entry = self.entries[index]
+        features = torch.from_numpy(np.array(self.hf['image_features'][entry['image']]))
+        spatials = torch.from_numpy(np.array(self.hf['spatial_features'][entry['image']]))
+	
+        question = entry['q_token']
+	#print("question id: %d", entry['question_id'])
+        target = torch.from_numpy(np.array([entry['question_id']]))
 
         return features, spatials, question, target
 
