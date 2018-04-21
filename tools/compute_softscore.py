@@ -207,14 +207,14 @@ def compute_target(answers_dset, ans2label, questions_dset, name, cache_root='da
         #When ANSWER IS DEFINITELY YES FOR THIS IMAGE, PROBABILITY OF NO IS HIGHER FOR RANDOM
         if ans_entry['answer_type'] == "yes/no" and name == 'train':
             if (no_yes >  no_no):
-                new_answer_count["yes"]=0.2 
-                new_answer_count["no"]=0.8
+                new_answer_count["yes"]= random.uniform(0.1,0.3)
+                new_answer_count["no"]=random.uniform(0.7,0.9)
             elif no_no > no_yes: #When ANSWER IS DEFINITELY No FOR THIS IMAGE, PROBABILITY OF NO IS HIGHER FOR RANDOM but some probability for yes
-                new_answer_count["yes"]=0.2
-                new_answer_count["no"]=0.8
+                new_answer_count["yes"]=random.uniform(0.1,0.3)
+                new_answer_count["no"]=random.uniform(0.7,0.9)
             elif no_no == no_yes and no_yes !=0 and no_no !=0:
-                answer_count["yes"]=0.5
-                answer_count["no"]=0.5
+                answer_count["yes"]=random.uniform(0.4,0.6)
+                answer_count["no"]=random.uniform(0.4,0.6)
 
 
         labels = []
